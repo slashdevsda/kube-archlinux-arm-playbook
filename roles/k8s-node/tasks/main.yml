@@ -1,0 +1,99 @@
+
+- name: Create /opt/bin directory
+  file:
+    path: /opt/bin
+    state: directory
+    mode: '0755'
+
+- name: Create /opt/cni/bin directory
+  file:
+    path: /opt/cni/bin
+    state: directory
+    mode: '0755'
+
+
+- name: Create /opt/k8s-ansible directory
+  file:
+    path: /opt/k8s-ansible
+    state: directory
+    mode: '0755'
+    
+
+# CNI
+- name: Download cni tgz
+  get_url:
+    url: https://github.com/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-linux-arm-{{ cni_version }}.tgz
+    dest: /opt/k8s-ansible/cni-plugins-linux-arm-{{ cni_version }}.tgz
+
+
+- name: Extract CNI tgz
+  unarchive:
+    src: /opt/k8s-ansible/cni-plugins-linux-arm-{{ cni_version }}.tgz
+    remote_src: yes
+    dest: /opt/cni/bin
+    mode: 0750
+    creates: /opt/cni/bin/flannel
+
+# CRICTL
+
+- name: Download critcl tgz
+  get_url:
+    url: https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-arm.tar.gz
+    dest: /opt/k8s-ansible/crictl-{{ crictl_version }}-arm.tar.gz
+
+
+
+- name: Extract crictl tgz
+  unarchive:
+    src: /opt/k8s-ansible/crictl-{{ crictl_version }}-arm.tar.gz
+    dest: /opt/bin
+    remote_src: yes
+    mode: 0750
+
+# - name: make /opt/cni/bin/ content exec
+#   file:
+#     path: /opt/cni/bin/
+#     mode: '0750'
+#     recurse: yes
+
+- name: Download kube{let,adm,ctl}
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/{{ kube_version }}/bin/linux/arm/{{item}}
+    dest: /opt/bin/{{item}}
+    mode: 0750
+  with_items:
+  - kubeadm
+  - kubectl
+  - kubelet
+
+
+- name: Create /etc/systemd/system/kubelet.service.d directory
+  file:
+    path: /etc/systemd/system/kubelet.service.d
+    state: directory
+
+
+- name: Download kubelet.service systemd unit file
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/kubernetes/{{ kube_version }}/build/debs/kubelet.service
+    dest: /etc/systemd/system/kubelet.service
+
+
+- name: ensure binary path is /opt/bin within unit
+  replace:
+    path: /etc/systemd/system/kubelet.service
+    regexp: '/usr/bin'
+    replace: '/opt/bin'
+
+- name: Download kubeadm.conf
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/kubernetes/{{ kube_version }}/build/debs/10-kubeadm.conf
+    dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+
+- name: ensure binary path is /opt/bin in kubeadm.conf
+  replace:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    regexp: '/usr/bin'
+    replace: '/opt/bin'
+    

@@ -10,61 +10,16 @@
     name: k8s
     state: present
 
-- name: Create /opt/bin directory
-  file:
-    path: /opt/bin
-    state: directory
-    mode: '0755'
+- name: Set authorized keys to k8s user
+  authorized_key:
+    user: k8s
+    state: present
+    key: "{{ authorized_key_url }}"
 
-- name: Create /opt/cni/bin directory
-  file:
-    path: /opt/cni/bin
-    state: directory
-    mode: '0755'
-
-- name: Create /opt/k8s-ansible directory
-  file:
-    path: /opt/k8s-ansible
-    state: directory
-    mode: '0755'
-    
-
-# CNI
-- name: Download cni tgz
-  get_url:
-    url: https://github.com/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-linux-arm-{{ cni_version }}.tgz
-    dest: /opt/k8s-ansible/cni-plugins-linux-arm-{{ cni_version }}.tgz
-
-
-- name: Extract cni tgz
-  unarchive: src=/opt/k8s-ansible/cni-plugins-linux-arm-{{ cni_version }}.tgz
-             dest=/opt/cni/bin
-             copy=no
-
-- name: make /opt/cni/bin/ content exec
-  file:
-    path: /opt/cni/bin/
-    mode: '0750'
-    recurse: yes
-
-# CRICTL
-
-- name: Download critcl tgz
-  get_url:
-    url: https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-arm.tar.gz
-    dest: /opt/k8s-ansible/crictl-{{ crictl_version }}-arm.tar.gz
-
-
-
-- name: Extract crictl tgz
-  unarchive:
-    src: /opt/k8s-ansible/crictl-{{ crictl_version }}-arm.tar.gz
-    dest: /opt/bin
-    copy: no
-    mode: 0750
-
-# - name: make /opt/cni/bin/ content exec
-#   file:
-#     path: /opt/cni/bin/
-#     mode: '0750'
-#     recurse: yes
+- name: Add user "k8s" to sudoers
+  lineinfile:
+    path: /etc/sudoers.d/k8s
+    line: 'k8s ALL=(ALL) NOPASSWD: ALL'
+    state: present
+    mode: 0440
+    create: yes

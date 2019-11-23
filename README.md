@@ -1,9 +1,14 @@
 # ARM k8s
 
-setup vanilla kubernetes on rasperry pi
-
+setup vanilla kubernetes on Rasperry pi
 Archlinux ARM
 
+
+Tested with Raspberry 3 B+/4 B+
+
+# steps:
+
+## Add an ansible user to rasbperries + ssh keys
 
 ```
 useradd -m ansible
@@ -14,4 +19,50 @@ chmod g-w /home/ansible/.ssh2
 chown -R ansible:ansible /home/ansible/.ssh
 ```
 
+## Read / Configure inventory.ini and site.yaml
 
+Don't add my public key to your nodes
+
+## Apply playbook
+
+```
+$ ansible-playbook -i inventory.ini site.yaml
+```
+
+
+## Forming the k8s cluser
+
+### master
+An user k8s is created by ansible for these purposes.
+
+Choose a master and ssh on it `ssh k8s@my-node`
+
+
+```
+export PATH="$PATH:/op/bin/"
+kubeadm init --pod-network-cidr=10.244.0.0/16
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+
+When your node is ready (`kubectl get nodes`), you can move forward an install *flannel*: 
+
+```
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+```
+
+
+#### make the master schedulable
+
+- _k8s < 17_
+  `kubectl taint node <master-node> node-role.kubernetes.io/master-`
+
+- _k8s >= 17_
+  `kubectl taint node <master-node> node-role.kubernetes.io/master:NoSchedule-`
+
+
+### Worker nodes
+
+At this point, you should be able to add others nodes using `kubeadm join`.
