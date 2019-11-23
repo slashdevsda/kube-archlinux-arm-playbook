@@ -1,14 +1,17 @@
 # ARM k8s
 
-setup vanilla kubernetes on Rasperry pi
-Archlinux ARM
+Setup vanilla kubernetes on Rasperry pi
 
+Tested with Raspberry 3 B+/4 B+, Archlinux ARM. 
 
-Tested with Raspberry 3 B+/4 B+
+Should be mostly distro-agnostic since it essentially fetches precompiled (arm) binaries
+
 
 # steps:
 
 ## Add an ansible user to rasbperries + ssh keys
+
+_replace with your own RSA public key_
 
 ```
 useradd -m ansible

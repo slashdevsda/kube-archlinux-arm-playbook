@@ -1,9 +1,4 @@
 ---
-# file: roles/common/tasks/main.yml
-- name: Install package curl from repo
-  pacman:
-    name: curl
-    state: present
   
 - name: Create k8s user
   user:
