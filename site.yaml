@@ -1,0 +1,9 @@
+---
+- hosts: nodes
+  become: true
+  vars:
+    cni_version: v0.8.3
+    crictl_version: v1.16.1
+    kube_version: v1.16.3
+  roles:
+    - common
