@@ -17,7 +17,7 @@
     path: /opt/k8s-ansible
     state: directory
     mode: '0755'
-    
+
 
 # CNI
 - name: Download cni tgz
@@ -67,6 +67,12 @@
   - kubelet
 
 
+
+- name: check if kube system'd unit exists
+  stat:
+    path: /etc/systemd/system/kubelet.service
+  register: systemd_unitfiles
+
 - name: Create /etc/systemd/system/kubelet.service.d directory
   file:
     path: /etc/systemd/system/kubelet.service.d
@@ -77,18 +83,20 @@
   get_url:
     url: https://raw.githubusercontent.com/kubernetes/kubernetes/{{ kube_version }}/build/debs/kubelet.service
     dest: /etc/systemd/system/kubelet.service
-
+  when: systemd_unitfiles.stat.exists == False
 
 - name: ensure binary path is /opt/bin within unit
   replace:
     path: /etc/systemd/system/kubelet.service
     regexp: '/usr/bin'
     replace: '/opt/bin'
+  when: systemd_unitfiles.stat.exists == False
 
 - name: Download kubeadm.conf
   get_url:
     url: https://raw.githubusercontent.com/kubernetes/kubernetes/{{ kube_version }}/build/debs/10-kubeadm.conf
     dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+  when: systemd_unitfiles.stat.exists == False
 
 
 - name: ensure binary path is /opt/bin in kubeadm.conf
@@ -96,4 +104,19 @@
     path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
     regexp: '/usr/bin'
     replace: '/opt/bin'
-    
+  when: systemd_unitfiles.stat.exists == False
+
+
+- name: Load the br_netfilter kernel module
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: update kernel settings (net.bridge.bridge-nf-call-iptables)
+  become: yes
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: "1"
+    sysctl_set: yes
+    state: present
+    reload: yes
