@@ -1,3 +1,16 @@
+- name: Update pacman cache
+  pacman:
+    update_cache: yes
+
+- name: Install Docker
+  pacman:
+    name: docker
+    state: present
+
+- name: Install conntrack-tools
+  pacman:
+    name: conntrack-tools
+    state: present
 
 - name: Create /opt/bin directory
   file:
@@ -120,3 +133,10 @@
     sysctl_set: yes
     state: present
     reload: yes
+
+- name: Copy docker's daemon.json config
+  copy:
+    src: files/etc_docker_daemon.json
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root

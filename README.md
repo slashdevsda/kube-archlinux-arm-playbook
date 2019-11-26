@@ -2,14 +2,17 @@
 
 Setup vanilla kubernetes on Rasperry pi
 
-Tested with Raspberry 3 B+/4 B+, Archlinux ARM. 
-
-Should be mostly distro-agnostic since it essentially fetches precompiled (arm) binaries
-
+Tested with Raspberry 3 B+/4 B+, Archlinux ARM.
 
 # steps:
 
 ## Add an ansible user to rasbperries + ssh keys
+
+open a shell (root) on your rasberry.
+
+
+
+You'll need to install python to provide a runtime for ansible, on each _Pi_, along with `sudo`.
 
 _replace with your own RSA public key_
 
@@ -50,16 +53,35 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 
+```
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 192.168.1.18:6443 --token 7j3kls.0pwet14cyycz7r37po  --discovery-token-ca-cert-[...]
+
+```
+
 When your node is ready (`kubectl get nodes`), you can move forward an install *flannel*: 
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-legacy.yml -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-rbac.yml
 ```
 
 
 #### make the master schedulable
 
-- _k8s < 17_
+- _k8s < 17 (I think)_ 
   `kubectl taint node <master-node> node-role.kubernetes.io/master-`
 
 - _k8s >= 17_
@@ -68,4 +90,4 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 
 ### Worker nodes
 
-At this point, you should be able to add others nodes using `kubeadm join`.
+Try adding nodes using `kubeadm join`.
