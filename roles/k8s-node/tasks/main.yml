@@ -2,11 +2,29 @@
   pacman:
     update_cache: yes
 
+- name: Install pre-requisites
+  pacman:
+    name: ['docker', 'ethtool', 'ebtables', 'socat', 'bridge-utils']
+    state: present
+
 - name: Install Docker
   pacman:
     name: docker
     state: present
 
+- name: Create /etc/docker if it does not exist
+  file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+    owner: 'root'
+
+- name: enable service docker
+  systemd:
+    name: docker
+    enabled: yes
+
+    
 - name: Install conntrack-tools
   pacman:
     name: conntrack-tools
@@ -63,11 +81,6 @@
     remote_src: yes
     mode: 0750
 
-# - name: make /opt/cni/bin/ content exec
-#   file:
-#     path: /opt/cni/bin/
-#     mode: '0750'
-#     recurse: yes
 
 - name: Download kube{let,adm,ctl}
   get_url:
@@ -79,7 +92,17 @@
   - kubectl
   - kubelet
 
+- name: ensure /opt/bin/ content's is executable
+  file:
+    path: /opt/bin/
+    mode: '0775'
+    recurse: yes
 
+- name: ensure /opt/cni/bin/ content's is executable
+  file:
+    path: /opt/cni/bin/
+    mode: '0775'
+    recurse: yes    
 
 - name: check if kube system'd unit exists
   stat:
@@ -119,6 +142,11 @@
     replace: '/opt/bin'
   when: systemd_unitfiles.stat.exists == False
 
+- name: enable kubelet service
+  systemd:
+    name: kubelet
+    enabled: yes
+  
 
 - name: Load the br_netfilter kernel module
   modprobe:
